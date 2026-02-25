@@ -1,8 +1,8 @@
 import json
-import os
+import subprocess
+from pathlib import Path
 import mysql.connector
 from mysql.connector import Error
-from pathlib import Path
 
 
 class Database:
@@ -28,9 +28,6 @@ class Database:
         """
         if not Path(path).exists():
             raise FileNotFoundError(f"Config file not found: {path}")
-
-        # Exécution du fichier PHP
-        import subprocess
 
         result = subprocess.run(
             ["php", str(path)],
@@ -64,78 +61,118 @@ class Database:
             raise RuntimeError(f"Database connection error: {e}")
 
     # ---------------------------------------------------------
-    # Insertion d'une commande
+    # COMMANDES
     # ---------------------------------------------------------
-    def save_order(self, order):
-        """
-        order = {
-            "numero": "...",
-            "contact": "...",
-            "date": "2026-02-18",
-            "statut": "...",
-            "facture": "F26-00935"
-        }
-        """
+    def get_order_by_numero(self, numero):
+        cursor = self.conn.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM orders WHERE numero = %s", (numero,))
+        return cursor.fetchone()
+
+    def insert_order(self, header):
+        cursor = self.conn.cursor()
         sql = """
             INSERT INTO orders (numero, contact, date_commande, statut, facture)
             VALUES (%s, %s, %s, %s, %s)
         """
-
-        values = (
-            order["numero"],
-            order.get("contact"),
-            order.get("date"),
-            order.get("statut"),
-            order.get("facture"),
-        )
-
-        cursor = self.conn.cursor()
-        cursor.execute(sql, values)
+        cursor.execute(sql, (
+            header["numero"],
+            header.get("contact"),
+            header.get("date"),
+            header.get("statut"),
+            header.get("facture"),
+        ))
         self.conn.commit()
-
         return cursor.lastrowid
 
-    # ---------------------------------------------------------
-    # Insertion d'un produit
-    # ---------------------------------------------------------
-    def save_order_item(self, order_id, item):
-        """
-        item = {
-            "reference": "...",
-            "nom": "...",
-            "quantite": "1.00",
-            "statut": "Facturé"
-        }
-        """
+    def update_order(self, order_id, header):
+        cursor = self.conn.cursor()
         sql = """
-            INSERT INTO order_items (order_id, reference, nom, quantite_commandee, statut)
+            UPDATE orders
+            SET contact=%s, date_commande=%s, statut=%s, facture=%s, updated_at=NOW()
+            WHERE id=%s
+        """
+        cursor.execute(sql, (
+            header.get("contact"),
+            header.get("date"),
+            header.get("statut"),
+            header.get("facture"),
+            order_id
+        ))
+        self.conn.commit()
+
+    # ---------------------------------------------------------
+    # ITEMS
+    # ---------------------------------------------------------
+    def get_item(self, order_id, reference):
+        cursor = self.conn.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT * FROM order_items
+            WHERE order_id = %s AND reference = %s
+        """, (order_id, reference))
+        return cursor.fetchone()
+
+    def insert_item(self, order_id, item):
+        cursor = self.conn.cursor()
+        sql = """
+            INSERT INTO order_items
+            (order_id, reference, nom, quantite_commandee, statut)
             VALUES (%s, %s, %s, %s, %s)
         """
-
-        values = (
+        cursor.execute(sql, (
             order_id,
             item["reference"],
             item["nom"],
             item["quantite"],
             item.get("statut"),
-        )
-
-        cursor = self.conn.cursor()
-        cursor.execute(sql, values)
+        ))
         self.conn.commit()
-
         return cursor.lastrowid
 
+    def update_item(self, item_id, item):
+        cursor = self.conn.cursor()
+        sql = """
+            UPDATE order_items
+            SET nom=%s,
+                quantite_commandee=%s,
+                statut=%s,
+                updated_at=NOW()
+            WHERE id=%s
+        """
+        cursor.execute(sql, (
+            item["nom"],
+            item["quantite"],
+            item.get("statut"),
+            item_id
+        ))
+        self.conn.commit()
+
+    def mark_item_deleted(self, item_id):
+        cursor = self.conn.cursor()
+        cursor.execute("""
+            UPDATE order_items
+            SET deleted_at = NOW()
+            WHERE id = %s AND deleted_at IS NULL
+        """, (item_id,))
+        self.conn.commit()
+
+    def restore_item(self, item_id):
+        cursor = self.conn.cursor()
+        cursor.execute("""
+            UPDATE order_items
+            SET deleted_at = NULL
+            WHERE id = %s
+        """, (item_id,))
+        self.conn.commit()
+
     # ---------------------------------------------------------
-    # Log du scraper
+    # LOGS
     # ---------------------------------------------------------
     def log_scrape(self, status, message):
+        cursor = self.conn.cursor()
         sql = """
             INSERT INTO scrape_logs (status, message)
             VALUES (%s, %s)
         """
-
-        cursor = self.conn.cursor()
         cursor.execute(sql, (status, message))
         self.conn.commit()
 

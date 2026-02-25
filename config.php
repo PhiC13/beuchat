@@ -2,7 +2,7 @@
 return [
 	"env"       => "local",
 	"db_host"   => "localhost",
-	"db_name"   => "veille_local",
+	"db_name"   => "beuchat_reception_local",
 	"db_user"   => "root",
 	"db_pass"   => "",
 	

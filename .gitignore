@@ -1,0 +1,18 @@
+__pycache__/
+*.pyc
+.env
+config.php
+
+*.log
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+
+# Node (future-proof)
+node_modules/
+

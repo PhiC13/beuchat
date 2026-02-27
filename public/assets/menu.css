@@ -1,0 +1,48 @@
+/* MENU HAMBURGER – THÈME LE BATEAU JAUNE */
+
+.hamburger-container {
+    position: relative;
+    background: var(--blue);
+    padding: 10px;
+}
+
+/* Bouton ☰ */
+.hamburger-btn {
+    font-size: 26px;
+    background: none;
+    border: none;
+    color: var(--yellow);
+    cursor: pointer;
+}
+
+/* Menu caché par défaut */
+.hamburger-menu {
+    display: none;
+    flex-direction: column;
+    background: var(--light);
+    border-bottom: 1px solid #ddd;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+/* Liens du menu */
+.hamburger-menu a {
+    display: block;
+    padding: 12px;
+    text-decoration: none;
+    color: var(--dark);
+    border-top: 1px solid #ddd;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.hamburger-menu a:hover {
+    background: var(--yellow);
+    color: var(--dark);
+}
+
+/* Ouverture du menu */
+body.menu-open .hamburger-menu {
+    display: flex;
+}

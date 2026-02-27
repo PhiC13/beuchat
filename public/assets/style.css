@@ -1,0 +1,90 @@
+/* RESET SIMPLE */
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: system-ui, sans-serif;
+    background: #f5f5f5;
+    color: #333;
+}
+
+/* LAYOUT */
+.container {
+    padding: 1rem;
+    max-width: 900px;
+    margin: auto;
+}
+
+/* TITRES */
+h1 {
+    margin-top: 0;
+    font-size: 1.6rem;
+}
+
+/* TABLE DESKTOP */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    margin-top: 1rem;
+}
+
+th, td {
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+}
+
+th {
+    background: #fafafa;
+    text-align: left;
+}
+
+/* LIENS / BOUTONS */
+a.button, button {
+    display: inline-block;
+    padding: 8px 12px;
+    background: #007bff;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+}
+
+a.button:hover, button:hover {
+    background: #005fcc;
+}
+
+/* --- MODE MOBILE : TABLE → CARTES --- */
+@media (max-width: 700px) {
+
+    table, thead, tbody, th, td, tr {
+        display: block;
+    }
+
+    tr {
+        background: white;
+        margin-bottom: 1rem;
+        padding: 10px;
+        border-radius: 6px;
+    }
+
+    th {
+        display: none;
+    }
+
+    td {
+        display: flex;
+        justify-content: space-between;
+        padding: 6px 0;
+    }
+
+    td::before {
+        content: attr(data-label);
+        font-weight: bold;
+        margin-right: 10px;
+    }
+}

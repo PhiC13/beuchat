@@ -23,52 +23,64 @@ $items = $pdo->prepare("
 ");
 $items->execute([$id]);
 $items = $items->fetchAll();
+
+$title = "Commande " . htmlspecialchars($commande['numero']);
+require __DIR__ . '/inc/header.php';
 ?>
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <title>Détails commande <?= htmlspecialchars($commande['numero']) ?></title>
-</head>
-<body>
 
 <h1>Commande <?= htmlspecialchars($commande['numero']) ?></h1>
 
 <p>
-    Contact : <?= htmlspecialchars($commande['contact']) ?><br>
-    Date : <?= htmlspecialchars($commande['date_commande']) ?><br>
-    Statut : <?= htmlspecialchars($commande['statut']) ?><br>
-    Facture : <?= htmlspecialchars($commande['facture']) ?><br>
+    <strong>Contact :</strong> <?= htmlspecialchars($commande['contact']) ?><br>
+    <strong>Date :</strong> <?= htmlspecialchars($commande['date_commande']) ?><br>
+    <strong>Statut :</strong> <?= htmlspecialchars($commande['statut']) ?><br>
 </p>
 
 <h2>Produits</h2>
 
-<table border="1" cellpadding="6">
-    <tr>
-        <th>Référence</th>
-        <th>Nom</th>
-        <th>Qté commandée</th>
-        <th>Qté reçue</th>
-        <th>Statut</th>
-        <th>Supprimé ?</th>
-    </tr>
+<form action="reception_commande.php" method="POST">
+    <input type="hidden" name="order_id" value="<?= $commande['id'] ?>">
 
-    <?php foreach ($items as $i): ?>
-        <tr>
-            <td><?= htmlspecialchars($i['reference']) ?></td>
-            <td><?= htmlspecialchars($i['nom']) ?></td>
-            <td><?= htmlspecialchars($i['quantite_commandee']) ?></td>
-            <td><?= htmlspecialchars($i['quantite_recue']) ?></td>
-            <td><?= htmlspecialchars($i['statut']) ?></td>
-            <td>
-                <?= $i['deleted_at'] ? "Oui ({$i['deleted_at']})" : "Non" ?>
-            </td>
-        </tr>
-    <?php endforeach; ?>
+    <table>
+        <thead>
+            <tr>
+                <th>Réf</th>
+                <th>Nom</th>
+                <th>Qté cmd</th>
+                <th>Qté reçue</th>
+                <th>Statut</th>
+            </tr>
+        </thead>
 
-</table>
+        <tbody>
+        <?php foreach ($items as $i): ?>
+            <tr>
+                <td data-label="Réf"><?= htmlspecialchars($i['reference']) ?></td>
+                <td data-label="Nom"><?= htmlspecialchars($i['nom']) ?></td>
+                <td data-label="Qté cmd"><?= htmlspecialchars($i['quantite_commandee']) ?></td>
 
-<p><a href="index.php">Retour</a></p>
+                <td data-label="Qté reçue">
+                    <input type="number"
+                           name="recue[<?= $i['id'] ?>]"
+                           value="<?= htmlspecialchars($i['quantite_recue']) ?>"
+                           min="0"
+                           max="<?= htmlspecialchars($i['quantite_commandee']) ?>"
+                           style="width: 70px;">
+                </td>
 
-</body>
-</html>
+                <td data-label="Statut">
+                    <?= htmlspecialchars($i['statut']) ?>
+                </td>
+            </tr>
+        <?php endforeach; ?>
+        </tbody>
+    </table>
+
+    <br>
+
+    <button type="submit">Mettre à jour la réception</button>
+</form>
+
+<p><a class="button" href="index.php">Retour</a></p>
+
+<?php require __DIR__ . '/inc/footer.php'; ?>

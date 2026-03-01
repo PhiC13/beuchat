@@ -4,49 +4,42 @@ require __DIR__ . '/inc/bootstrap.php';
 // Log début
 log_event($pdo, 'update_start', 'Début de mise à jour via bouton header');
 
-// Racine du projet (un niveau au-dessus de /public)
-$projectRoot = realpath(__DIR__ . '/..');
+// Racine du projet
+$projectRoot = realpath(__DIR__ . '\\..');
 
-// Commande Python via Poetry
-$cmd = 'cd ' . escapeshellarg($projectRoot) . ' && poetry run python script/update_db.py 2>&1';
+// Détection OS
+$isWindows = (PHP_OS_FAMILY === 'Windows');
 
-// Exécution robuste avec exec()
+if ($isWindows) {
+    // Python Poetry Windows
+    $python = 'C:\\Users\\phic1\\AppData\\Local\\pypoetry\\Cache\\virtualenvs\\beuchat-reception-f00p9s3A-py3.14\\Scripts\\python.exe';
+    $cmd = 'cd "' . $projectRoot . '" && "' . $python . '" script\\update_db.py 2>&1';
+} else {
+    // Linux (o2switch) — à adapter plus tard
+    $python = 'python3';
+    $cmd = 'cd ' . escapeshellarg($projectRoot) . ' && ' . $python . ' script/update_db.py 2>&1';
+}
+
+// Exécution robuste
 $outputLines = [];
 $returnVar = 0;
 exec($cmd, $outputLines, $returnVar);
-
-// Reconstituer la sortie complète
 $output = implode("\n", $outputLines);
 
-// Log debug systématique (toujours utile sur o2switch)
+// Log debug
 log_event($pdo, 'update_debug', 'Résultat brut exec()', [
     'cmd' => $cmd,
     'return_var' => $returnVar,
     'output' => $output,
 ]);
 
-// Critères d’erreur robustes
+// Détection d’erreur
 $hasError = false;
 
-// 1) Code retour ≠ 0 → échec
-if ($returnVar !== 0) {
-    $hasError = true;
-}
-
-// 2) Sortie vide → Python ne s’est probablement pas exécuté
-if (trim($output) === '') {
-    $hasError = true;
-}
-
-// 3) Sortie contenant "Traceback" → erreur Python
-if (stripos($output, 'traceback') !== false) {
-    $hasError = true;
-}
-
-// 4) Sortie contenant "Error" (insensible à la casse)
-if (stripos($output, 'error') !== false) {
-    $hasError = true;
-}
+if ($returnVar !== 0) $hasError = true;
+if (trim($output) === '') $hasError = true;
+if (stripos($output, 'traceback') !== false) $hasError = true;
+if (stripos($output, 'error') !== false) $hasError = true;
 
 if ($hasError) {
     log_event($pdo, 'update_error', 'Erreur lors de la mise à jour', [

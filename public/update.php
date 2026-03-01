@@ -22,6 +22,12 @@ if ($isWindows) {
 } else {
 
     // --- LINUX (o2switch) ---
+    // Fix o2switch: set_env_vars.py requires HOME, USER, LOGNAME, PATH
+    putenv('HOME=/home/vapu2355');
+    putenv('USER=vapu2355');
+    putenv('LOGNAME=vapu2355');
+    putenv('PATH=/usr/local/bin:/usr/bin:/bin');
+
     // Chemin Python o2switch
     $python = '/home/vapu2355/virtualenv/intranet.lebateaujaune.com/beuchat/3.11/bin/python';
 
@@ -48,10 +54,25 @@ log_event($pdo, 'update_debug', 'Résultat brut exec()', [
 // Détection d’erreur
 $hasError = false;
 
-if ($returnVar !== 0) $hasError = true;
-if (trim($output) === '') $hasError = true;
-if (stripos($output, 'traceback') !== false) $hasError = true;
-if (stripos($output, 'error') !== false) $hasError = true;
+// 1) Code retour ≠ 0
+if ($returnVar !== 0) {
+    $hasError = true;
+}
+
+// 2) Sortie vide
+if (trim($output) === '') {
+    $hasError = true;
+}
+
+// 3) Erreur Python réelle (ignorer set_env_vars.py)
+if (preg_match('/Traceback(?!.*set_env_vars)/i', $output)) {
+    $hasError = true;
+}
+
+// 4) Mot "error" dans la sortie (mais ignorer set_env_vars)
+if (preg_match('/error/i', $output) && !preg_match('/set_env_vars/i', $output)) {
+    $hasError = true;
+}
 
 if ($hasError) {
     log_event($pdo, 'update_error', 'Erreur lors de la mise à jour', [

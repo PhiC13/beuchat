@@ -11,34 +11,49 @@ $where = [];
 $params = [];
 
 // Recherche texte
-if (!empty($_GET['q'])) {
+$search = $_GET['q'] ?? '';
+if ($search !== '') {
     $where[] = "(reference LIKE ? OR nom LIKE ?)";
-    $params[] = "%" . $_GET['q'] . "%";
-    $params[] = "%" . $_GET['q'] . "%";
+    $params[] = "%" . $search . "%";
+    $params[] = "%" . $search . "%";
 }
 
-// Filtre statut global
-if (!empty($_GET['statut'])) {
-    if ($_GET['statut'] === 'en_attente') {
-        $where[] = "SUM(CAST(quantite_recue AS UNSIGNED)) = 0";
-    } elseif ($_GET['statut'] === 'partielle') {
-        $where[] = "SUM(CAST(quantite_recue AS UNSIGNED)) > 0 
-                    AND SUM(CAST(quantite_recue AS UNSIGNED)) < SUM(CAST(quantite_commandee AS UNSIGNED))";
-    } elseif ($_GET['statut'] === 'receptionnee') {
-        $where[] = "SUM(CAST(quantite_recue AS UNSIGNED)) = SUM(CAST(quantite_commandee AS UNSIGNED))";
-    }
+// Filtre simple : réceptionné / non réceptionné
+$filtre_statut = $_GET['statut'] ?? '';
+
+$having = [];
+
+/*
+   Agrégats normalisés :
+
+   total_cmd   = SUM(COALESCE(CAST(quantite_commandee AS UNSIGNED), 0))
+   total_recue = SUM(COALESCE(CAST(quantite_recue     AS UNSIGNED), 0))
+
+   - "Réceptionnés"      : total_cmd > 0 AND total_recue >= total_cmd
+   - "Non réceptionnés"  : total_cmd > 0 AND total_recue <  total_cmd
+*/
+
+if ($filtre_statut === 'receptionne') {
+    $having[] = "SUM(COALESCE(CAST(quantite_commandee AS UNSIGNED), 0)) > 0";
+    $having[] = "SUM(COALESCE(CAST(quantite_recue     AS UNSIGNED), 0)) >= 
+                 SUM(COALESCE(CAST(quantite_commandee AS UNSIGNED), 0))";
+} elseif ($filtre_statut === 'non_receptionne') {
+    $having[] = "SUM(COALESCE(CAST(quantite_commandee AS UNSIGNED), 0)) > 0";
+    $having[] = "SUM(COALESCE(CAST(quantite_recue     AS UNSIGNED), 0)) < 
+                 SUM(COALESCE(CAST(quantite_commandee AS UNSIGNED), 0))";
 }
 
 $sql = "
     SELECT 
         reference,
         nom,
-        SUM(CAST(quantite_commandee AS UNSIGNED)) AS total_cmd,
-        SUM(CAST(quantite_recue AS UNSIGNED)) AS total_recue,
+        SUM(COALESCE(CAST(quantite_commandee AS UNSIGNED), 0)) AS total_cmd,
+        SUM(COALESCE(CAST(quantite_recue     AS UNSIGNED), 0)) AS total_recue,
         COUNT(DISTINCT order_id) AS nb_commandes
     FROM order_items
     " . (count($where) ? "WHERE " . implode(" AND ", $where) : "") . "
     GROUP BY reference, nom
+    " . (count($having) ? "HAVING " . implode(" AND ", $having) : "") . "
     ORDER BY reference
 ";
 
@@ -52,22 +67,41 @@ log_event($pdo, 'view_products_list', 'Consultation de la liste des produits', [
 ?>
 
 <h1 class="section-header">
-    <span>Produits</span>
+    <span>
+        Produits 
+        <small style="font-size: 0.7em; opacity: 0.7;">
+            (<?= count($produits) ?>)
+        </small>
+    </span>
 
     <form method="GET" class="filters-inline">
-        <input type="text" name="q" placeholder="Recherche..."
-               value="<?= htmlspecialchars($_GET['q'] ?? '') ?>">
 
+        <!-- Bouton reset -->
+		<a href="produits.php" class="reset-btn" title="Réinitialiser les filtres">
+			<svg viewBox="0 0 24 24" class="reset-icon">
+				<path fill="currentColor" d="M18 6L6 18M6 6l12 12"/>
+			</svg>
+		</a>
+
+        <!-- Recherche texte -->
+        <input type="text" name="q" placeholder="Recherche..."
+               value="<?= htmlspecialchars($search) ?>">
+
+        <!-- Filtre statut -->
         <select name="statut">
-            <option value="">-- Statut --</option>
-            <option value="en_attente" <?= ($_GET['statut'] ?? '') === 'en_attente' ? 'selected' : '' ?>>En attente</option>
-            <option value="partielle" <?= ($_GET['statut'] ?? '') === 'partielle' ? 'selected' : '' ?>>Partielle</option>
-            <option value="receptionnee" <?= ($_GET['statut'] ?? '') === 'receptionnee' ? 'selected' : '' ?>>Réceptionné</option>
+            <option value="">-- Tous les produits --</option>
+            <option value="non_receptionne" <?= $filtre_statut === 'non_receptionne' ? 'selected' : '' ?>>
+                Non réceptionnés
+            </option>
+            <option value="receptionne" <?= $filtre_statut === 'receptionne' ? 'selected' : '' ?>>
+                Réceptionnés
+            </option>
         </select>
 
         <button type="submit">OK</button>
     </form>
 </h1>
+
 
 <table>
     <thead>

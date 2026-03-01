@@ -37,7 +37,7 @@ body {
 /* TITRES */
 h1 {
     margin-top: 0;
-    font-size: 1.8rem;
+    font-size: 1.7rem;
     color: var(--blue);
     border-left: 6px solid var(--yellow);
     padding-left: 10px;
@@ -116,4 +116,32 @@ a.button:hover, button:hover {
         margin-right: 10px;
         color: var(--blue);
     }
+}
+
+.reset-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;              /* même hauteur que bouton OK */
+    height: 28px;
+    border: 1px solid var(--blue);
+    background: var(--light);
+    color: var(--blue);
+    border-radius: 4px;
+    padding: 0;
+    margin-right: 2px;        /* collé au champ recherche */
+    text-decoration: none;
+}
+
+.reset-btn:hover {
+    background: var(--yellow);
+    color: black;
+}
+
+.reset-icon {
+    width: 14px;
+    height: 14px;
+    stroke: currentColor;
+    stroke-width: 2;
+    fill: none;
 }

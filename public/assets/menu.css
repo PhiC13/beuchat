@@ -1,5 +1,8 @@
 /* MENU HAMBURGER – THÈME LE BATEAU JAUNE */
 
+/* MENU HAMBURGER – THÈME LE BATEAU JAUNE */
+
+/* Conteneur bleu du header */
 .hamburger-container {
     position: relative;
     background: var(--blue);
@@ -15,15 +18,34 @@
     cursor: pointer;
 }
 
-/* Menu caché par défaut */
+/* Animation du bouton hamburger */
+.hamburger-btn {
+    transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+/* Quand le menu est ouvert */
+body.menu-open .hamburger-btn {
+    transform: rotate(90deg);
+    opacity: 0.7;
+}
+
+/* --- MENU PRINCIPAL (caché par défaut) --- */
 .hamburger-menu {
-    display: none;
-    flex-direction: column;
     background: var(--light);
     border-bottom: 1px solid #ddd;
     width: 100%;
-    margin: 0;
-    padding: 0;
+    overflow: hidden;
+
+    /* Animation */
+    max-height: 0;
+    opacity: 0;
+    transition: max-height 0.3s ease, opacity 0.2s ease;
+}
+
+/* Ouverture du menu */
+body.menu-open .hamburger-menu {
+    max-height: 500px; /* assez pour tout le menu */
+    opacity: 1;
 }
 
 /* Liens du menu */
@@ -42,10 +64,52 @@
     color: var(--dark);
 }
 
-/* Ouverture du menu */
-body.menu-open .hamburger-menu {
+/* --- SOUS-MENUS (Exports / Logs) --- */
+
+.menu-group {
     display: flex;
+    flex-direction: column;
+    border-top: 1px solid #ddd;
 }
+
+.menu-toggle {
+    background: none;
+    border: none;
+    color: var(--blue);
+    font-size: 1em;
+    text-align: left;
+    padding: 12px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+/* Sous-menu caché */
+.menu-sub {
+    overflow: hidden;
+    max-height: 0;
+    display: flex;
+    flex-direction: column;
+    transition: max-height 0.25s ease;
+    background: var(--light);
+    padding-left: 12px;
+}
+
+/* Sous-menu ouvert */
+.menu-group.open .menu-sub {
+    max-height: 300px;
+}
+
+.menu-sub a {
+    padding: 8px 12px;
+    color: var(--blue);
+    text-decoration: none;
+}
+
+.menu-sub a:hover {
+    background: var(--yellow);
+    color: var(--dark);
+}
+
 
 /* ---------------------------------------------------------
    FILTRES (commandes / produits / détails)
@@ -258,5 +322,45 @@ body.menu-open .hamburger-menu {
     min-width: 160px;
 }
 
+.hamburger-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.menu-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.menu-toggle {
+    background: none;
+    border: none;
+    color: var(--blue);
+    font-size: 1em;
+    text-align: left;
+    padding: 8px 0;
+    cursor: pointer;
+}
+
+.menu-sub {
+    display: none;
+    flex-direction: column;
+    padding-left: 12px;
+    gap: 6px;
+}
+
+.menu-group.open .menu-sub {
+    display: flex;
+}
+
+.menu-sub a {
+    color: var(--blue);
+    text-decoration: none;
+}
+
+.menu-sub a:hover {
+    text-decoration: underline;
+}
 
 

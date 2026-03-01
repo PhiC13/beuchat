@@ -79,7 +79,7 @@ class Database:
             header.get("contact"),
             header.get("date"),
             header.get("statut"),
-            header.get("facture"),
+            header.get("facture", None),
         ))
         self.conn.commit()
         return cursor.lastrowid

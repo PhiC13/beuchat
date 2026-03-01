@@ -3,6 +3,9 @@ require __DIR__ . '/inc/bootstrap.php';
 
 $id = intval($_GET['id'] ?? 0);
 
+/* ---------------------------------------------------------
+   0. Récupération de la commande
+--------------------------------------------------------- */
 $commande = $pdo->prepare("
     SELECT *
     FROM orders
@@ -21,26 +24,38 @@ log_event($pdo, 'view_order', 'Consultation d’une commande', [
 ]);
 
 /* ---------------------------------------------------------
-   1. Construction dynamique des filtres
+   1. Récupération dynamique des statuts des items
+--------------------------------------------------------- */
+$statuts_items = $pdo->query("
+    SELECT DISTINCT statut
+    FROM order_items
+    WHERE order_id = $id
+    ORDER BY statut ASC
+")->fetchAll(PDO::FETCH_COLUMN);
+
+/* ---------------------------------------------------------
+   2. Construction dynamique des filtres
 --------------------------------------------------------- */
 $where = ["order_id = ?"];
 $params = [$id];
 
 // Recherche texte (référence ou nom)
-if (!empty($_GET['q'])) {
+$search = $_GET['q'] ?? '';
+if ($search !== '') {
     $where[] = "(reference LIKE ? OR nom LIKE ?)";
-    $params[] = "%" . $_GET['q'] . "%";
-    $params[] = "%" . $_GET['q'] . "%";
+    $params[] = "%" . $search . "%";
+    $params[] = "%" . $search . "%";
 }
 
 // Filtre statut
-if (!empty($_GET['statut'])) {
+$selected_status = $_GET['statut'] ?? '';
+if ($selected_status !== '') {
     $where[] = "statut = ?";
-    $params[] = $_GET['statut'];
+    $params[] = $selected_status;
 }
 
 /* ---------------------------------------------------------
-   2. Requête SQL dynamique
+   3. Requête SQL dynamique
 --------------------------------------------------------- */
 $sql = "
     SELECT *
@@ -53,6 +68,9 @@ $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 $items = $stmt->fetchAll();
 
+/* ---------------------------------------------------------
+   4. Header
+--------------------------------------------------------- */
 $title = "Commande " . htmlspecialchars($commande['numero']);
 require __DIR__ . '/inc/header.php';
 ?>
@@ -66,28 +84,45 @@ require __DIR__ . '/inc/header.php';
 </p>
 
 <h2 class="section-header">
-    <span>Produits</span>
+    <span>
+        Produits
+        <small style="font-size: 0.7em; opacity: 0.7;">
+            (<?= count($items) ?>)
+        </small>
+    </span>
 
     <form method="GET" class="filters-inline">
         <input type="hidden" name="id" value="<?= $id ?>">
 
-        <input type="text" name="q" placeholder="Recherche..."
-               value="<?= htmlspecialchars($_GET['q'] ?? '') ?>">
+        <!-- Bouton reset -->
+        <a href="commande.php?id=<?= $id ?>" class="reset-btn" title="Réinitialiser les filtres">
+            <svg viewBox="0 0 24 24" class="reset-icon">
+                <path fill="currentColor" d="M18 6L6 18M6 6l12 12"/>
+            </svg>
+        </a>
 
+        <!-- Recherche texte -->
+        <input type="text" name="q" placeholder="Recherche..."
+               value="<?= htmlspecialchars($search) ?>">
+
+        <!-- Liste déroulante dynamique -->
         <select name="statut">
-            <option value="">-- Statut --</option>
-            <option value="en_attente" <?= ($_GET['statut'] ?? '') === 'en_attente' ? 'selected' : '' ?>>En attente</option>
-            <option value="partielle" <?= ($_GET['statut'] ?? '') === 'partielle' ? 'selected' : '' ?>>Partielle</option>
-            <option value="receptionnee" <?= ($_GET['statut'] ?? '') === 'receptionnee' ? 'selected' : '' ?>>Réceptionnée</option>
+            <option value="">-- Tous les statuts --</option>
+
+            <?php foreach ($statuts_items as $s): ?>
+                <option value="<?= htmlspecialchars($s) ?>"
+                    <?= ($selected_status === $s) ? 'selected' : '' ?>>
+                    <?= ucfirst(htmlspecialchars($s)) ?>
+                </option>
+            <?php endforeach; ?>
         </select>
 
         <button type="submit">OK</button>
     </form>
 </h2>
 
-
 <!-- ---------------------------------------------------------
-     4. Tableau des produits
+     5. Tableau des produits
 --------------------------------------------------------- -->
 <form action="reception_commande.php" method="POST">
     <input type="hidden" name="order_id" value="<?= $commande['id'] ?>">
@@ -135,3 +170,4 @@ require __DIR__ . '/inc/header.php';
 <p><a class="button" href="index.php">Retour</a></p>
 
 <?php require __DIR__ . '/inc/footer.php'; ?>
+<?php component_footer(); ?>

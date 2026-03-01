@@ -130,3 +130,6 @@ log_event($pdo, 'view_products_list', 'Consultation de la liste des produits', [
 </table>
 
 <?php require __DIR__ . '/inc/footer.php'; ?>
+<?php component_footer(); ?>
+
+

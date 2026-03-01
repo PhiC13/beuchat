@@ -4,7 +4,10 @@ require __DIR__ . '/inc/bootstrap.php';
 // Log début
 log_event($pdo, 'update_start', 'Début de mise à jour via bouton header');
 
-$cmd = 'python3 /src/beuchat_reception/scrapper.py 2>&1';
+// Commande Python via Poetry
+$cmd = 'cd ' . escapeshellarg(__DIR__ . '/..') . ' && poetry run python script/update_db.py 2>&1';
+
+// Exécution
 $output = shell_exec($cmd);
 
 // Si le script renvoie quelque chose contenant "Error" ou est vide

@@ -13,7 +13,6 @@
 
     <div class="top-bar">
 
-        <!-- LOGO + TITRE SUR LA MÊME LIGNE -->
         <div class="top-bar-left">
             <img src="assets/LogoLBJ_Small.png" alt="Logo Le Bateau Jaune" class="lbj-logo">
             <h1>Réception Beuchat</h1>
@@ -21,7 +20,6 @@
 
         <div class="top-bar-right">
 
-            <!-- SWITCH COMMANDES / PRODUITS -->
             <div class="top-switch">
                 <a href="index.php"
                    class="<?= basename($_SERVER['PHP_SELF']) === 'index.php' ? 'active' : '' ?>">
@@ -34,7 +32,6 @@
                 </a>
             </div>
 
-            <!-- BOUTON RAFRAÎCHIR (SVG) -->
             <a href="update.php" class="refresh-btn" id="refreshTrigger" title="Mettre à jour la base">
                 <svg class="refresh-icon" viewBox="0 0 24 24">
                     <path fill="currentColor"
@@ -42,25 +39,40 @@
                 </svg>
             </a>
 
-            <!-- SPINNER (caché par défaut) -->
             <div id="refreshSpinner" class="spinner" style="display:none;"></div>
 
-            <!-- BOUTON HAMBURGER -->
-            <button class="hamburger-btn" onclick="document.body.classList.toggle('menu-open');">
+            <button class="hamburger-btn" id="hamburgerToggle">
                 ☰
             </button>
         </div>
 
     </div>
 
+    <!-- ICI seulement le contenu du menu, y compris Logs -->
     <nav class="hamburger-menu">
-        <a href="index.php">Accueil</a>
-        <a href="produits.php">Produits</a>
-        <a href="export_commandes.php">Export commandes</a>
-        <a href="export_produits.php">Export produits</a>
-        <a href="export_receptions.php">Export réceptions</a>
+
+        <div class="menu-group">
+            <button class="menu-toggle">Exports ▾</button>
+            <div class="menu-sub">
+                <a href="export_commandes.php">Export commandes</a>
+                <a href="export_produits.php">Export produits</a>
+                <a href="export_receptions.php">Export réceptions</a>
+            </div>
+        </div>
+
+        <div class="menu-group">
+            <button class="menu-toggle">Logs ▾</button>
+            <div class="menu-sub">
+                <a href="logs_updates.php">Mises à jour base</a>
+                <a href="logs_actions.php">Actions utilisateur</a>
+                <a href="logs_receptions.php">Réceptions</a>
+            </div>
+        </div>
+
     </nav>
+
 </div>
+
 
 <div class="container">
 

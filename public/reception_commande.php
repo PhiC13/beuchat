@@ -20,7 +20,7 @@ $items->execute([$order_id]);
 $items = $items->fetchAll();
 
 /* ---------------------------------------------------------
-   2. Mise à jour des lignes
+   2. Préparation des requêtes
 --------------------------------------------------------- */
 $update_item = $pdo->prepare("
     UPDATE order_items
@@ -30,8 +30,16 @@ $update_item = $pdo->prepare("
     WHERE id = ?
 ");
 
-$changes = []; // Pour le log
+$insert_reception = $pdo->prepare("
+    INSERT INTO receptions (order_item_id, quantite, utilisateur)
+    VALUES (?, ?, ?)
+");
 
+$changes = []; // Pour le log métier
+
+/* ---------------------------------------------------------
+   3. Mise à jour des lignes
+--------------------------------------------------------- */
 foreach ($items as $item) {
 
     $item_id = $item['id'];
@@ -39,11 +47,10 @@ foreach ($items as $item) {
     $qte_old = intval($item['quantite_recue']);
     $qte_new = isset($recues[$item_id]) ? intval($recues[$item_id]) : $qte_old;
 
-    // Sécurisation
     if ($qte_new < 0) $qte_new = 0;
     if ($qte_new > $qte_cmd) $qte_new = $qte_cmd;
 
-    // Détermination du statut ligne
+    // Détermination du statut
     if ($qte_new == 0) {
         $statut = "en_attente";
     } elseif ($qte_new < $qte_cmd) {
@@ -52,22 +59,32 @@ foreach ($items as $item) {
         $statut = "receptionnee";
     }
 
-    // Log interne des changements
+    // Si changement → log + insertion dans receptions
     if ($qte_new !== $qte_old) {
+
         $changes[] = [
             'item_id' => $item_id,
             'old' => $qte_old,
             'new' => $qte_new,
             'statut' => $statut
         ];
+
+        // Quantité reçue à cet instant
+        $delta = $qte_new - $qte_old;
+
+        $insert_reception->execute([
+            $item_id,
+            $delta,
+            $_SERVER['REMOTE_USER'] ?? 'inconnu'
+        ]);
     }
 
-    // Mise à jour
+    // Mise à jour de la ligne
     $update_item->execute([$qte_new, $statut, $item_id]);
 }
 
 /* ---------------------------------------------------------
-   3. Mise à jour du statut global de la commande
+   4. Mise à jour du statut global de la commande
 --------------------------------------------------------- */
 $stats = $pdo->prepare("
     SELECT 
@@ -95,7 +112,7 @@ $update_order = $pdo->prepare("
 $update_order->execute([$statut_commande, $order_id]);
 
 /* ---------------------------------------------------------
-   4. Log métier
+   5. Log métier global
 --------------------------------------------------------- */
 log_event($pdo, 'update_reception', 'Mise à jour de la réception commande', [
     'order_id' => $order_id,
@@ -105,7 +122,7 @@ log_event($pdo, 'update_reception', 'Mise à jour de la réception commande', [
 ]);
 
 /* ---------------------------------------------------------
-   5. Redirection
+   6. Redirection
 --------------------------------------------------------- */
 header("Location: commande.php?id=" . $order_id);
 exit;

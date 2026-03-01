@@ -64,7 +64,16 @@ require __DIR__ . '/inc/header.php';
 <h1>Produit : <?= htmlspecialchars($ref) ?></h1>
 <p><strong><?= htmlspecialchars($nom_produit) ?></strong></p>
 
-<h2>Présent dans <?= count($items) ?> commande(s)</h2>
+<h2 class="section-header">
+    <span>Présent dans <?= count($items) ?> commande(s)</span>
+
+    <a href="reception_detail_produit.php?ref=<?= urlencode($ref) ?>"
+       class="button"
+       style="background:#eee; color:#333; padding:6px 10px; font-size:0.85em;">
+        🕒 Historique des réceptions
+    </a>
+</h2>
+
 
 <table>
     <thead>
@@ -80,24 +89,41 @@ require __DIR__ . '/inc/header.php';
         </tr>
     </thead>
 
-    <tbody>
-    <?php foreach ($items as $i): ?>
-        <tr>
-            <td><?= htmlspecialchars($i['numero_commande']) ?></td>
-            <td><?= htmlspecialchars($i['contact']) ?></td>
-            <td><?= htmlspecialchars($i['date_commande']) ?></td>
-            <td><?= intval($i['quantite_commandee']) ?></td>
-            <td><?= intval($i['quantite_recue']) ?></td>
-            <td><?= htmlspecialchars($i['statut_ligne']) ?></td>
-            <td><?= htmlspecialchars($i['statut_commande']) ?></td>
-            <td>
-                <a class="button" href="commande.php?id=<?= $i['order_id'] ?>">Voir</a>
-            </td>
-        </tr>
-    <?php endforeach; ?>
-    </tbody>
+<tbody>
+<?php foreach ($items as $i): ?>
+    <tr>
+        <td><?= htmlspecialchars($i['numero_commande']) ?></td>
+        <td><?= htmlspecialchars($i['contact']) ?></td>
+        <td><?= htmlspecialchars($i['date_commande']) ?></td>
+        <td><?= intval($i['quantite_commandee']) ?></td>
+        <td><?= intval($i['quantite_recue']) ?></td>
+        <td><?= htmlspecialchars($i['statut_ligne']) ?></td>
+        <td><?= htmlspecialchars($i['statut_commande']) ?></td>
+		<td style="display:flex; align-items:center; gap:6px;">
+
+			<a class="button" href="commande.php?id=<?= $i['order_id'] ?>">Voir</a>
+
+			<a class="icon-btn"
+			href="reception_detail.php?id=<?= $i['item_id'] ?>"
+			title="Historique des réceptions">
+				<svg class="icon-history" viewBox="0 0 24 24">
+					<path fill="none" stroke="currentColor" stroke-width="2"
+						d="M12 6v6l4 2m5-2a9 9 0 1 1-9-9 9 9 0 0 1 9 9Z"/>
+				</svg>
+			</a>
+
+		</td>
+
+
+    </tr>
+<?php endforeach; ?>
+</tbody>
+
 </table>
 
 <p><a class="button" href="produits.php">Retour</a></p>
 
 <?php require __DIR__ . '/inc/footer.php'; ?>
+<?php component_footer(); ?>
+
+

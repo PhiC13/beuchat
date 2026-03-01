@@ -31,11 +31,23 @@ class OrderRepository:
         if existing:
             order_id = existing["id"]
             self.db.update_order(order_id, header)
+            order_added = False
         else:
             order_id = self.db.insert_order(header)
+            order_added = True
 
-        # 2) Synchroniser les items
-        self._sync_items(order_id, items)
+        # 2) Synchroniser les items et récupérer les stats
+        items_added, items_updated, items_deleted, items_restored = \
+            self._sync_items(order_id, items)
+
+        # 3) Retourner les stats pour update_db.py
+        return {
+            "order_added": order_added,
+            "items_added": items_added,
+            "items_updated": items_updated,
+            "items_deleted": items_deleted,
+            "items_restored": items_restored
+        }
 
     # ---------------------------------------------------------
     # Synchronisation des items
@@ -48,6 +60,12 @@ class OrderRepository:
         - disparus → mark deleted
         - réapparus → restore
         """
+
+        # Compteurs
+        added = 0
+        updated = 0
+        deleted = 0
+        restored = 0
 
         # Indexation des items scrapés par référence
         scraped_by_ref = {item["reference"]: item for item in scraped_items}
@@ -64,12 +82,14 @@ class OrderRepository:
             if ref not in existing_by_ref:
                 # nouvel item
                 self.db.insert_item(order_id, scraped)
+                added += 1
             else:
                 existing = existing_by_ref[ref]
 
                 # item supprimé précédemment → restaurer
                 if existing["deleted_at"] is not None:
                     self.db.restore_item(existing["id"])
+                    restored += 1
 
                 # item modifié ?
                 if (
@@ -78,8 +98,12 @@ class OrderRepository:
                     or scraped.get("statut") != existing.get("statut")
                 ):
                     self.db.update_item(existing["id"], scraped)
+                    updated += 1
 
         # 2) Items disparus → mark deleted
         for ref, existing in existing_by_ref.items():
             if ref not in scraped_by_ref:
                 self.db.mark_item_deleted(existing["id"])
+                deleted += 1
+
+        return added, updated, deleted, restored

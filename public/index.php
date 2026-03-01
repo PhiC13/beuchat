@@ -140,3 +140,6 @@ log_event($pdo, 'list_orders', 'Affichage de la liste des commandes', [
 </table>
 
 <?php require __DIR__ . '/inc/footer.php'; ?>
+<?php component_footer(); ?>
+
+

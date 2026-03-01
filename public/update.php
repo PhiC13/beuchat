@@ -16,8 +16,8 @@ if ($isWindows) {
     $cmd = 'cd "' . $projectRoot . '" && "' . $python . '" script\\update_db.py 2>&1';
 } else {
     // Linux (o2switch) — à adapter plus tard
-    $python = 'python3';
-    $cmd = 'cd ' . escapeshellarg($projectRoot) . ' && ' . $python . ' script/update_db.py 2>&1';
+	$python = '/home/vapu2355/virtualenv/intranet.lebateaujaune.com/beuchat/3.11/bin/python';
+	$cmd = $python . ' /home/vapu2355/intranet.lebateaujaune.com/beuchat/script/update_db.py 2>&1';
 }
 
 // Exécution robuste

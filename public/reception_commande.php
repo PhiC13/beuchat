@@ -1,5 +1,5 @@
 <?php
-require __DIR__ . '/db.php';
+require __DIR__ . '/inc/bootstrap.php';
 
 $order_id = intval($_POST['order_id'] ?? 0);
 $recues = $_POST['recue'] ?? [];
@@ -30,6 +30,8 @@ $update_item = $pdo->prepare("
     WHERE id = ?
 ");
 
+$changes = []; // Pour le log
+
 foreach ($items as $item) {
 
     $item_id = $item['id'];
@@ -48,6 +50,16 @@ foreach ($items as $item) {
         $statut = "partielle";
     } else {
         $statut = "receptionnee";
+    }
+
+    // Log interne des changements
+    if ($qte_new !== $qte_old) {
+        $changes[] = [
+            'item_id' => $item_id,
+            'old' => $qte_old,
+            'new' => $qte_new,
+            'statut' => $statut
+        ];
     }
 
     // Mise à jour
@@ -83,7 +95,17 @@ $update_order = $pdo->prepare("
 $update_order->execute([$statut_commande, $order_id]);
 
 /* ---------------------------------------------------------
-   4. Redirection
+   4. Log métier
+--------------------------------------------------------- */
+log_event($pdo, 'update_reception', 'Mise à jour de la réception commande', [
+    'order_id' => $order_id,
+    'statut_final' => $statut_commande,
+    'modifications' => $changes,
+    'ip' => $_SERVER['REMOTE_ADDR'] ?? null,
+]);
+
+/* ---------------------------------------------------------
+   5. Redirection
 --------------------------------------------------------- */
 header("Location: commande.php?id=" . $order_id);
 exit;
